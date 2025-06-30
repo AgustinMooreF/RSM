@@ -3,25 +3,51 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings, Settings
+from app.core.dependencies import get_observability_service
 from app.api.router import api_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager."""
+    """Application lifespan manager with observability."""
     settings = get_settings()
     
     os.makedirs(settings.chroma_persist_directory, exist_ok=True)
+    
+    # Initialize observability service
+    observability_service = get_observability_service()
     
     print(f"Starting {settings.app_name} v{settings.app_version}")
     print(f"Chroma DB directory: {settings.chroma_persist_directory}")
     
     if not settings.openai_api_key:
-        print("OpenAI API key not set. Document ingestion will fail.")
+        print("⚠️  WARNING: OpenAI API key not set. Document ingestion will fail.")
+    
+    if settings.langfuse_secret_key and settings.langfuse_public_key:
+        print("✅ Langfuse observability enabled")
+        observability_service.log_metrics("application_startup", {
+            "app_name": settings.app_name,
+            "app_version": settings.app_version,
+            "observability_enabled": True
+        })
+    else:
+        print("⚠️  Langfuse observability disabled (keys not provided)")
+        print("   Set LANGFUSE_SECRET_KEY and LANGFUSE_PUBLIC_KEY environment variables to enable")
     
     yield
 
-    print("Shutting down RAG Microservice")
+    print("Shutting down RAG Microservice...")
+    
+    if observability_service:
+        print("Flushing observability events...")
+        observability_service.flush()
+        observability_service.log_metrics("application_shutdown", {
+            "app_name": settings.app_name,
+            "graceful_shutdown": True
+        })
+        observability_service.flush()
+    
+    print("Shutdown complete")
 
 
 def create_app() -> FastAPI:

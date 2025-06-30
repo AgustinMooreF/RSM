@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     chunk_size: int = 500
     chunk_overlap: int = 100
     
+    # Langfuse Observability Configuration
+    langfuse_secret_key: str = ""
+    langfuse_public_key: str = ""
+    langfuse_host: str = "https://cloud.langfuse.com"
+    
     class Config:
         env_file = ".env"
 
