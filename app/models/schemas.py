@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
@@ -15,7 +15,15 @@ class IngestRequest(BaseModel):
     )
 
 
+class IngestFileRequest(BaseModel):
+    """For file uploads (PDFs, etc.)"""
+    document_type: Literal["pdf"] = Field(
+        default="pdf", description="Type of document being uploaded"
+    )
+
+
 class IngestResponse(BaseModel):
     status: Literal["success", "error"]
     message: str
-    chunks_created: int = Field(ge=0, description="Number of chunks created from the document") 
+    chunks_created: int = Field(ge=0, description="Number of chunks created from the document")
+    document_info: Optional[dict] = Field(None, description="Additional document information") 
