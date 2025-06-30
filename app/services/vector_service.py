@@ -52,4 +52,28 @@ class VectorService:
                 "collection_name": self.collection_name
             }
         except Exception as e:
-            return {"error": str(e)} 
+            return {"error": str(e)}
+    
+    async def search_similar(self, query_embedding: List[float], top_k: int = 5) -> List[dict]:
+        """Search for similar documents using embedding similarity."""
+        try:
+            results = self.collection.query(
+                query_embeddings=[query_embedding],
+                n_results=top_k,
+                include=["documents", "metadatas", "distances"]
+            )
+            
+            search_results = []
+            if results and results["documents"] and results["documents"][0]:
+                for i, doc in enumerate(results["documents"][0]):
+                    result = {
+                        "text": doc,
+                        "metadata": results["metadatas"][0][i] if results["metadatas"] and results["metadatas"][0] else {},
+                        "distance": results["distances"][0][i] if results["distances"] and results["distances"][0] else 0.0
+                    }
+                    search_results.append(result)
+            
+            return search_results
+        
+        except Exception as e:
+            raise RuntimeError(f"Failed to search similar documents: {str(e)}") 

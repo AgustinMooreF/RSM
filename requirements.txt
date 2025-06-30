@@ -2,11 +2,23 @@ fastapi==0.115.14
 uvicorn[standard]==0.35.0
 pydantic==2.11.7
 pydantic-settings==2.10.1
-langchain==0.1.0
-langchain-openai==0.0.2
-langchain-community==0.0.10
-chromadb==0.4.18
+
+# LangChain 0.3.x with flexible versions to avoid conflicts
+langchain>=0.3.0,<0.4.0
+langchain-core>=0.3.17,<0.4.0
+langchain-openai>=0.2.0,<0.3.0
+langchain-community>=0.3.0,<0.4.0
+langchain-text-splitters>=0.3.0,<0.4.0
+
+# Vector database - Pin NumPy to avoid 2.0 compatibility issues
+chromadb==0.4.24
+numpy>=1.24.0,<2.0.0
+
+# OpenAI with tiktoken pre-built
 openai>=1.6.1,<2.0.0
+tiktoken>=0.5.0
+
+# Document processing
 requests==2.31.0
 beautifulsoup4==4.12.2
 pdfplumber==0.10.3

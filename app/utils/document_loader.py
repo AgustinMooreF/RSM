@@ -1,8 +1,8 @@
 import requests
 import io
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, Optional
 from bs4 import BeautifulSoup
-from langchain.schema import Document
+from langchain_core.documents import Document
 import pdfplumber
 
 
@@ -10,13 +10,13 @@ class DocumentLoader:
     """Utility class for loading documents of different types."""
     
     @staticmethod
-    def load_text(content: str, metadata: Dict[str, Any] = None) -> Document:
+    def load_text(content: str, metadata: Optional[Dict[str, Any]] = None) -> Document:
         if metadata is None:
             metadata = {"type": "text"}
         return Document(page_content=content, metadata=metadata)
     
     @staticmethod
-    def load_html(content: str, metadata: Dict[str, Any] = None) -> Document:
+    def load_html(content: str, metadata: Optional[Dict[str, Any]] = None) -> Document:
         soup = BeautifulSoup(content, 'html.parser')
         
         for script in soup(["script", "style"]):
@@ -34,13 +34,13 @@ class DocumentLoader:
         return Document(page_content=text, metadata=metadata)
     
     @staticmethod
-    def load_markdown(content: str, metadata: Dict[str, Any] = None) -> Document:
+    def load_markdown(content: str, metadata: Optional[Dict[str, Any]] = None) -> Document:
         if metadata is None:
             metadata = {"type": "markdown"}
         return Document(page_content=content, metadata=metadata)
     
     @staticmethod
-    def load_pdf(content: Union[str, bytes], metadata: Dict[str, Any] = None) -> Document:
+    def load_pdf(content: Union[str, bytes], metadata: Optional[Dict[str, Any]] = None) -> Document:
         if metadata is None:
             metadata = {"type": "pdf"}
         

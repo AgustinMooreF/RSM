@@ -1,9 +1,10 @@
 from app.core.config import Settings
-from app.models.schemas import IngestResponse
+from app.models.schemas import IngestResponse, QueryResponse, Source
 from app.utils.document_loader import DocumentLoader
 from app.utils.text_splitter import SmartTextSplitter
 from app.services.embedding_service import EmbeddingService
 from app.services.vector_service import VectorService
+from app.services.llm_service import LLMService
 
 
 class DocumentService:
@@ -17,6 +18,7 @@ class DocumentService:
         )
         self.embedding_service = EmbeddingService(settings)
         self.vector_service = VectorService(settings)
+        self.llm_service = LLMService(settings)
     
     async def ingest_document(self, content: str, document_type: str) -> IngestResponse:
         """Ingest a document from text content or URL."""
@@ -29,7 +31,8 @@ class DocumentService:
                 return IngestResponse(
                     status="error",
                     message="No chunks were created from the document",
-                    chunks_created=0
+                    chunks_created=0,
+                    document_info=None
                 )
             
             embedding_results = await self.embedding_service.embed_chunks(chunks)
@@ -54,7 +57,8 @@ class DocumentService:
             return IngestResponse(
                 status="error",
                 message=f"Failed to ingest document: {str(e)}",
-                chunks_created=0
+                chunks_created=0,
+                document_info=None
             )
     
     async def ingest_file(self, file_content: bytes, filename: str, document_type: str) -> IngestResponse:
@@ -77,7 +81,8 @@ class DocumentService:
                 return IngestResponse(
                     status="error",
                     message="No chunks were created",
-                    chunks_created=0
+                    chunks_created=0,
+                    document_info=None
                 )
             
             embedding_results = await self.embedding_service.embed_chunks(chunks)
@@ -102,9 +107,49 @@ class DocumentService:
             return IngestResponse(
                 status="error",
                 message=f"Failed to ingest file '{filename}': {str(e)}",
-                chunks_created=0
+                chunks_created=0,
+                document_info=None
             )
     
     async def get_stats(self) -> dict:
         """Get statistics about the document store."""
-        return await self.vector_service.get_collection_stats() 
+        return await self.vector_service.get_collection_stats()
+    
+    async def query_documents(self, question: str) -> QueryResponse:
+        """Query documents using RAG (Retrieval-Augmented Generation)."""
+        try:
+            question_embedding = await self.embedding_service.generate_embedding(question)
+            
+            similar_chunks = await self.vector_service.search_similar(
+                query_embedding=question_embedding,
+                top_k=5
+            )
+            
+            if not similar_chunks:
+                return QueryResponse(
+                    answer="I don't have any relevant documents to answer this question.",
+                    sources=[]
+                )
+            
+            answer = await self.llm_service.generate_answer(question, similar_chunks)
+            
+
+            sources = []
+            for chunk in similar_chunks:
+                metadata = chunk.get("metadata", {})
+                source = Source(
+                    page=metadata.get("page"),
+                    text=chunk.get("text", "")[:200] + "..." if len(chunk.get("text", "")) > 200 else chunk.get("text", "")
+                )
+                sources.append(source)
+            
+            return QueryResponse(
+                answer=answer,
+                sources=sources
+            )
+        
+        except Exception as e:
+            return QueryResponse(
+                answer=f"An error occurred while processing your question: {str(e)}",
+                sources=[]
+            ) 

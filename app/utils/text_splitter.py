@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.schema import Document
+from langchain_core.documents import Document
 import uuid
 import re
 
@@ -8,7 +8,7 @@ import re
 class DocumentChunk:
     """Represents a document chunk with metadata."""
     
-    def __init__(self, text: str, metadata: dict, chunk_id: str = None):
+    def __init__(self, text: str, metadata: dict, chunk_id: Optional[str] = None):
         self.text = text
         self.metadata = metadata
         self.chunk_id = chunk_id or str(uuid.uuid4())
@@ -26,7 +26,7 @@ class SmartTextSplitter:
             separators=["\n--- Page", "\n\n", "\n", " ", ""]
         )
     
-    def _extract_page_number(self, text: str) -> int:
+    def _extract_page_number(self, text: str) -> Optional[int]:
         page_match = re.search(r"--- Page (\d+) ---", text)
         if page_match:
             return int(page_match.group(1))
@@ -46,7 +46,6 @@ class SmartTextSplitter:
                 "original_length": len(document.page_content)
             }
             
-            # Extract page number if this is a PDF chunk
             if chunk.metadata.get("type") == "pdf":
                 page_num = self._extract_page_number(chunk.page_content)
                 if page_num:

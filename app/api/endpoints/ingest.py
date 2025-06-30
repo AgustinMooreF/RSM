@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Form
-from app.models.schemas import IngestRequest, IngestResponse, IngestFileRequest
+from app.models.schemas import IngestRequest, IngestResponse
 from app.services.document_service import DocumentService
 from app.core.dependencies import get_document_service
 
@@ -51,8 +51,7 @@ async def ingest_file(
     Currently supports PDF files only.
     """
     try:
-        # Validate file type
-        if not file.filename.lower().endswith('.pdf'):
+        if not file.filename or not file.filename.lower().endswith('.pdf'):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only PDF files are supported for file upload"
@@ -64,7 +63,6 @@ async def ingest_file(
                 detail="File upload only supports PDF document type"
             )
         
-        # Read file content
         file_content = await file.read()
         
         if not file_content:
@@ -73,10 +71,9 @@ async def ingest_file(
                 detail="Uploaded file is empty"
             )
         
-        # Process the file
         result = await document_service.ingest_file(
             file_content=file_content,
-            filename=file.filename,
+            filename=file.filename or "uploaded_file.pdf",
             document_type=document_type
         )
         
