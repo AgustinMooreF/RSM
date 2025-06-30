@@ -1,0 +1,62 @@
+version: "3.8"
+
+services:
+  rag-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-microservice
+    ports:
+      - "8000:8000"
+    environment:
+      # Application Configuration
+      - APP_NAME=RAG Microservice
+      - APP_VERSION=1.0.0
+      - DEBUG=false
+
+      # OpenAI Configuration (Required)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+
+      # Vector Database Configuration
+      - CHROMA_PERSIST_DIRECTORY=/app/chroma_db
+      - COLLECTION_NAME=${COLLECTION_NAME:-documents}
+
+      # Document Processing Configuration
+      - CHUNK_SIZE=${CHUNK_SIZE:-500}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-100}
+
+      # Langfuse Observability Configuration (Optional)
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-https://cloud.langfuse.com}
+
+    volumes:
+      # Persist ChromaDB data
+      - chroma_data:/app/chroma_db
+      # Mount logs directory (optional)
+      - ./logs:/app/logs
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+
+    # Resource limits for production
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+volumes:
+  chroma_data:
+    driver: local
