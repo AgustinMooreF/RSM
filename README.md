@@ -41,7 +41,11 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 3. **Run with Docker**
 ```bash
+# Using docker-compose (older versions)
 docker-compose up --build
+
+# Using docker compose (newer versions)
+docker compose up --build
 ```
 
 4. **Test the service**
@@ -65,6 +69,7 @@ Service available at: **http://localhost:8000**
 | `GET` | `/api/v1/health` | Health check |
 | `POST` | `/api/v1/ingest` | Ingest text/URL documents |
 | `POST` | `/api/v1/ingest/file` | Upload PDF files |
+| `POST` | `/api/v1/query` | Query ingested documents |
 
 ### Interactive Documentation
 - **Swagger UI**: http://localhost:8000/docs
@@ -98,7 +103,19 @@ Form data:
 - document_type: "pdf"
 ```
 
-### Expected Response
+### 4. Query Documents
+```
+POST http://localhost:8000/api/v1/query
+Content-Type: application/json
+
+{
+  "question": "What is the main topic of the document?"
+}
+```
+
+### Expected Responses
+
+**Ingest Response:**
 ```json
 {
   "status": "success",
@@ -108,6 +125,19 @@ Form data:
     "type": "text",
     "original_length": 234
   }
+}
+```
+
+**Query Response:**
+```json
+{
+  "answer": "The document discusses artificial intelligence and its applications in modern technology.",
+  "sources": [
+    {
+      "page": 1,
+      "text": "AI is transforming how we interact with technology..."
+    }
+  ]
 }
 ```
 
@@ -147,6 +177,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 |----------|----------|---------|-------------|
 | `OPENAI_API_KEY` | ✅ | - | OpenAI API key |
 | `OPENAI_MODEL` | ❌ | "gpt-4o-mini" | OpenAI model |
+| `LANGFUSE_SECRET_KEY` | ❌ | - | Langfuse secret key for observability |
+| `LANGFUSE_PUBLIC_KEY` | ❌ | - | Langfuse public key for observability |
+| `LANGFUSE_HOST` | ❌ | "https://cloud.langfuse.com" | Langfuse host URL |
 | `CHUNK_SIZE` | ❌ | 1000 | Document chunk size |
 | `CHUNK_OVERLAP` | ❌ | 200 | Chunk overlap size |
 
