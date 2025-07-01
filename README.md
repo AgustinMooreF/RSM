@@ -1,3 +1,10 @@
+# Asset comments:
+	-	Since I’m still gaining experience with Python, my decisions in the code are a mix of self-study and assistance from Cursor.
+	- The same goes for frameworks like LangChain—fortunately, it shares many similarities with Masta IA, which I’ve worked with the most.
+	- I applied the Singleton pattern in the FastAPI implementation based on my experience with NestJS for performance reasons. It was a great opportunity to learn about concepts like lru_cache, pydantic, and asynccontextmanager to achieve this.
+	- Apologies in advance if some parts of the repo are a bit messy. I’m very open to learning more about Python best practices, as well as best practices in Generative AI.
+
+
 # RAG Microservice
 
 A Python-based Retrieval-Augmented Generation (RAG) microservice built with FastAPI, featuring document processing with PDF support, vector search with ChromaDB, and OpenAI integration.
@@ -120,11 +127,18 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ## Architecture
 
-[TODO: Add your architecture decisions and explanations here]
+	-	Singleton pattern applied to class instances, improving memory usage and performance by ensuring only one instance of each required class runs at a time.
+	-	Project structure follows a service–model–controller pattern for better organization and maintainability.
+	-	Local ChromaDB is used for quick setup and development. For production, changes will be needed to ensure persistence—especially if deploying with technologies like Kubernetes.
+	- Langfuse is used for observability, as it was the easiest to implement based on my initial and short research.
 
 ## How RAG Works
 
-[TODO: Add your explanation of how the RAG system works here]
+	- Supports both files and URLs.
+	-	Accepted file types: .html, .md, .txt, and .pdf.
+	-	Chunk size and overlap are configurable via the .env file (default: 500 and 200, respectively).
+	-	Uses ChromaDB for vector storage.
+	-	The default embedding model is text-embedding-3-small from OpenAI, but this can be changed based on performance needs.
 
 ## Configuration
 
